@@ -28,4 +28,4 @@
 11. **Returning All Stories**: If a user requests more stories than exist in the collection, all available stories are returned.
 12. **Authentication**: It is not implement, in real life I would go for Azure AD if possible.
 13. **Load tests**: No load tests were performed. As a result setting number of workers is by trial.
-14. **Job status**: Hangfire allows to check the status of the job. I take advantage of this feature in the project. However in real life I would rather go for my own object sth like BusinessOpertion which would be stored in database and would provide me with the status. It gives more flexibility especially if hangfire is to be replaced with sthe else.
+14. **Job status**: Hangfire allows to check the status of the job. I take advantage of this feature in the project with function WaitUntilStatusIsCompleted. However in real life I would rather go for my own object sth like BusinessOpertion which would be stored in database and would provide me with the status. It gives more flexibility especially if hangfire is to be replaced with sthe else.
