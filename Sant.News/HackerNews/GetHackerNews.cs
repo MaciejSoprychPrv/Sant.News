@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -79,8 +80,20 @@ namespace Sant.News.HackerNews
 
         public class Handler : IRequestHandler<Query, Result<List<GetHackerNewsDto>>>
         {
+            private readonly IBackgroundJobClient _client;
+            private readonly IIdsProcessing _idsProcessing;
+            private readonly IStoryDetailsProcessing _storyDetailsProcessing;
+
+            public Handler(IBackgroundJobClient client, IIdsProcessing idsProcessing, IStoryDetailsProcessing storyDetailsProcessing)
+            {
+                _client = client;
+                _idsProcessing = idsProcessing;
+                _storyDetailsProcessing = storyDetailsProcessing;
+            }
+
             public Task<Result<List<GetHackerNewsDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
+                var idsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds());
                 throw new NotImplementedException();
             }
         }
