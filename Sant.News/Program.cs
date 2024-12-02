@@ -1,3 +1,4 @@
+using FluentValidation;
 using Hangfire;
 using Sant.News.HackerNews;
 using Serilog;
@@ -14,7 +15,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
 builder.Services.AddScoped<IIdsProcessing, IdsProcessing>();
 builder.Services.AddScoped<IStoryDetailsProcessing, StoryDetailsProcessing>();
-
+builder.Services.AddValidatorsFromAssemblyContaining<GetHackerNews.Query>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var logger = new LoggerConfiguration()

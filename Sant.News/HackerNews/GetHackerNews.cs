@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -39,27 +40,14 @@ namespace Sant.News.HackerNews
             public int CommentCount { get; set; }
         }
 
-        public class HackerNewsRaw
+        public class Validator : AbstractValidator<Query>
         {
-            [JsonProperty("by")] public string By { get; set; }
-
-            [JsonProperty("descendants")] public int Descendants { get; set; }
-
-            [JsonProperty("id")] public int Id { get; set; }
-
-            [JsonProperty("kids")] public List<int> Kids { get; set; }
-
-            [JsonProperty("score")] public int Score { get; set; }
-
-            [JsonProperty("text")] public string Text { get; set; }
-
-            [JsonProperty("time")] public int Time { get; set; }
-
-            [JsonProperty("title")] public string Title { get; set; }
-
-            [JsonProperty("type")] public string Type { get; set; }
-
-            [JsonProperty("url")] public string Url { get; set; }
+            public Validator()
+            {
+                RuleFor(x => x.StoriesCount)
+                    .GreaterThan(0)
+                    .WithMessage("StoriesCount must be greater than zero.");
+            }
         }
 
         public class MappingProfile : Profile
@@ -85,20 +73,30 @@ namespace Sant.News.HackerNews
             private readonly IStoryDetailsProcessing _storyDetailsProcessing;
             private readonly IMapper _mapper;
             private readonly ILogger<Handler> _logger;
-
-            public Handler(IBackgroundJobClient client, IIdsProcessing idsProcessing, IStoryDetailsProcessing storyDetailsProcessing, IMapper mapper, ILogger<Handler> logger)
+            private readonly IValidator<Query> _validator;
+ 
+            public Handler(IBackgroundJobClient client, IIdsProcessing idsProcessing, IStoryDetailsProcessing storyDetailsProcessing, IMapper mapper, ILogger<Handler> logger, IValidator<Query> validator)
             {
                 _client = client;
                 _idsProcessing = idsProcessing;
                 _storyDetailsProcessing = storyDetailsProcessing;
                 _mapper = mapper;
                 _logger = logger;
+                _validator = validator;
             }
 
             public async Task<Result<List<GetHackerNewsDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
-                _logger.LogInformation("Fetching Hacker News' ids started");
+                _logger.LogInformation("Validation of storiesCount started");
 
+                var validationResult = await _validator.ValidateAsync(request, cancellationToken);
+                if (validationResult.IsValid == false)
+                {
+                    return Result.BadRequest<List<GetHackerNewsDto>>("Stories count should be greater than 0");
+                }
+                _logger.LogInformation("Validation of storiesCount completed");
+
+                _logger.LogInformation("Fetching Hacker News' ids started");
                 var idsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds());
                 _logger.LogInformation("Processing ids enqueued");
 
