@@ -1,3 +1,13 @@
+### How It Works
+
+1. **Application Launch**: Run the application in debug mode using IIS Express.
+2. **`storiesCount` Parameter**: The controller has a single parameter, `storiesCount`, which must be greater than 0. This value should be specified during the request.
+3. **Controller File**: The controller is located in the file `GetHackerNews`.
+4. **Managing Retry Attempts in Hangfire**: The number of retry attempts can be configured in the `Program` class, with `Attempts = 2` set in the Hangfire configuration.
+5. **Managing Number of Threads**: The number of threads used to query the API `https://hacker-news.firebaseio.com/` can be adjusted in the `Program` class. This is controlled by the `WorkerCount = 10` parameter in the Hangfire server configuration.
+   - **Higher `WorkerCount`**: Increases the load on the external API.
+   - **Lower `WorkerCount`**: Reduces the load on the external API.
+
 ### Project Assumptions
 
 1. **No Database**: All data is stored in cache; no database is implemented. There should be database in real life application to store Hangfire jobs and stories ids and and details.
