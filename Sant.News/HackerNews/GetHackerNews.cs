@@ -96,19 +96,20 @@ namespace Sant.News.HackerNews
                 var idsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds());
                 
                 var detailsJobId = _client.ContinueJobWith(idsJobId, "hackernews", ()=>_storyDetailsProcessing.AddDetails());
-
-                await Task.Delay(10000);
                 
                 var detailsJobIdStatus = GetStatus(detailsJobId);
 
+                var rawStoriesDetail = _storyDetailsProcessing.GetAllStoryDetails();
 
                 throw new NotImplementedException();
+
+
             }
 
             private string GetStatus(string jobId)
             {
-                int maxRetries = 20;
-                int retryDelayMilliseconds = 1000;
+                int maxRetries = 50;
+                int retryDelayMilliseconds = 2000;
 
                 for (int attempt = 1; attempt <= maxRetries; attempt++)
                 {

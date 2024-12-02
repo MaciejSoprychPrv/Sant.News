@@ -45,7 +45,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseHangfireDashboard();
 
-app.UseSerilogRequestLogging();
+//app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 

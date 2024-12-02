@@ -19,7 +19,20 @@ namespace Sant.News.HackerNews
             _cache = cache;
             _hackerNewsConnectionOptions = hackerNewsConnectionOptions.Value;
         }
-
+        public List<HackerNewsRaw> GetAllStoryDetails()
+        {
+            var rawId = GetIds();
+            var ids = Convert(rawId);
+            var allStories = new List<HackerNewsRaw>();
+            foreach (var id in ids)
+            {
+                if (_cache.TryGetValue($"FetchRawStoriesDetail_{id}", out HackerNewsRaw storyDetail))
+                {
+                    allStories.Add(storyDetail);
+                }
+            }
+            return allStories;
+        }
         public async Task AddDetails()
         {
             var idsRaw = GetIds();
@@ -59,6 +72,7 @@ namespace Sant.News.HackerNews
 
     public interface IStoryDetailsProcessing
     {
+        List<HackerNewsRaw> GetAllStoryDetails();
         Task AddDetails();
     }
 }
