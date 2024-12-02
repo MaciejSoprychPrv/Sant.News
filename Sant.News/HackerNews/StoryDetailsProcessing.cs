@@ -15,11 +15,13 @@ namespace Sant.News.HackerNews
         private readonly HackerNewsConnectionOptions _hackerNewsConnectionOptions;
         private readonly IMemoryCache _cache;
         private readonly IBackgroundJobClient _client;
+        private readonly ILogger<StoryDetailsProcessing> _logger;
 
-        public StoryDetailsProcessing(IOptions<HackerNewsConnectionOptions> hackerNewsConnectionOptions, IMemoryCache cache, IBackgroundJobClient client)
+        public StoryDetailsProcessing(IOptions<HackerNewsConnectionOptions> hackerNewsConnectionOptions, IMemoryCache cache, IBackgroundJobClient client, ILogger<StoryDetailsProcessing> logger)
         {
             _cache = cache;
             _client = client;
+            _logger = logger;
             _hackerNewsConnectionOptions = hackerNewsConnectionOptions.Value;
         }
 
@@ -47,6 +49,7 @@ namespace Sant.News.HackerNews
             {
                 var detailJobId = _client.Enqueue("hackernews", () => AddDetail(id));
                 detailJobsIds.Add(detailJobId);
+                _logger.LogInformation($"Getting detail for story {id} enqueued");
             }
             _cache.Set("DetailJobIds", detailJobsIds, TimeSpan.FromMinutes(30));
         }

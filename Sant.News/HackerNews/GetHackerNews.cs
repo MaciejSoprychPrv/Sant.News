@@ -97,19 +97,19 @@ namespace Sant.News.HackerNews
                 _logger.LogInformation("Validation of storiesCount completed");
 
                 _logger.LogInformation("Fetching Hacker News' ids started");
-                var idsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds());
+                var addIdsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds());
                 _logger.LogInformation("Processing ids enqueued");
 
-                var detailsJobId = _client.ContinueJobWith(idsJobId, "hackernews", ()=>_storyDetailsProcessing.AddDetails());
-                _logger.LogInformation("Processing details enqueued");
+                _logger.LogInformation($"Waiting for AddIds job to be completed");
+                WaitUntilStatusIsCompleted(addIdsJobId);
+                _logger.LogInformation($"AddIds job status completed");
 
-                var detailsJobIdStatus = GetStatus(detailsJobId);
+                await _storyDetailsProcessing.AddDetails();
+                _logger.LogInformation("Processing details");
 
-                if (detailsJobIdStatus != JobIdStatus.Succeeded.ToString())
-                {
-                    _logger.LogInformation("Processing failed");
-                    return Result.BadRequest<List<GetHackerNewsDto>>("The process was not successful please try again");
-                }
+                
+
+                
 
                 _logger.LogInformation("Getting Details from cache started");
                 var rawStoriesDetails = _storyDetailsProcessing.GetAllStoryDetails();
@@ -142,7 +142,7 @@ namespace Sant.News.HackerNews
 
                 return storiesCount;
             }
-            private string GetStatus(string jobId)
+            private string WaitUntilStatusIsCompleted(string jobId)
             {
                 int maxRetries = 50;
                 int retryDelayMilliseconds = 2000;
@@ -151,14 +151,12 @@ namespace Sant.News.HackerNews
                 {
                     string status = GetJobState(jobId);
 
-                    if (status == "Succeeded")
+                    if (status != "Succeeded")
                     {
-                        return status;
-                    }
-
-                    if (attempt < maxRetries)
-                    {
-                        Task.Delay(retryDelayMilliseconds).Wait();
+                        if (attempt < maxRetries)
+                        {
+                            Task.Delay(retryDelayMilliseconds).Wait();
+                        }
                     }
                 }
 
