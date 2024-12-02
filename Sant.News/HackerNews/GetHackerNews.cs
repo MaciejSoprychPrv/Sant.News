@@ -83,12 +83,14 @@ namespace Sant.News.HackerNews
             private readonly IBackgroundJobClient _client;
             private readonly IIdsProcessing _idsProcessing;
             private readonly IStoryDetailsProcessing _storyDetailsProcessing;
+            private readonly IMapper _mapper;
 
-            public Handler(IBackgroundJobClient client, IIdsProcessing idsProcessing, IStoryDetailsProcessing storyDetailsProcessing)
+            public Handler(IBackgroundJobClient client, IIdsProcessing idsProcessing, IStoryDetailsProcessing storyDetailsProcessing, IMapper mapper)
             {
                 _client = client;
                 _idsProcessing = idsProcessing;
                 _storyDetailsProcessing = storyDetailsProcessing;
+                _mapper = mapper;
             }
 
             public async Task<Result<List<GetHackerNewsDto>>> Handle(Query request, CancellationToken cancellationToken)
@@ -99,11 +101,11 @@ namespace Sant.News.HackerNews
                 
                 var detailsJobIdStatus = GetStatus(detailsJobId);
 
-                var rawStoriesDetail = _storyDetailsProcessing.GetAllStoryDetails();
+                var rawStoriesDetails = _storyDetailsProcessing.GetAllStoryDetails();
 
-                throw new NotImplementedException();
+                var result = _mapper.Map<List<GetHackerNewsDto>>(rawStoriesDetails);
 
-
+                return Result.Ok(result);
             }
 
             private string GetStatus(string jobId)
@@ -125,11 +127,10 @@ namespace Sant.News.HackerNews
 
                     if (attempt < maxRetries)
                     {
-                        Task.Delay(retryDelayMilliseconds).Wait(); // Poczekaj przed kolejną próbą
+                        Task.Delay(retryDelayMilliseconds).Wait();
                     }
                 }
 
-                Console.WriteLine("Nie udało się uzyskać statusu 'Succeeded' po maksymalnej liczbie prób.");
                 return "Failed to retrieve status";
             }
             public string GetJobState(string jobId)

@@ -26,7 +26,7 @@ namespace Sant.News.HackerNews
             var allStories = new List<HackerNewsRaw>();
             foreach (var id in ids)
             {
-                if (_cache.TryGetValue($"FetchRawStoriesDetail_{id}", out HackerNewsRaw storyDetail))
+                if (_cache.TryGetValue($"Detail_{id}", out HackerNewsRaw storyDetail))
                 {
                     allStories.Add(storyDetail);
                 }
