@@ -25,6 +25,12 @@ namespace Sant.News.HackerNews
             _hackerNewsConnectionOptions = hackerNewsConnectionOptions.Value;
         }
 
+        public List<string> GetDetailJobsIds()
+        {
+            var detailJobIds = _cache.Get<List<string>>("DetailJobIds");
+            return detailJobIds;
+        }
+
         public List<HackerNewsRaw> GetAllStoryDetails()
         {
             var rawId = GetIds();
@@ -85,5 +91,6 @@ namespace Sant.News.HackerNews
     {
         List<HackerNewsRaw> GetAllStoryDetails();
         Task AddDetails();
+        List<string> GetDetailJobsIds();
     }
 }
