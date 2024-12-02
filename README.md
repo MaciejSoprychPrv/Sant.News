@@ -7,6 +7,7 @@
 5. **Managing Number of Threads**: The number of threads used to query the API `https://hacker-news.firebaseio.com/` can be adjusted in the `Program` class. This is controlled by the `WorkerCount = 10` parameter in the Hangfire server configuration.
    - **Higher `WorkerCount`**: Increases the load on the external API.
    - **Lower `WorkerCount`**: Reduces the load on the external API.
+     
 
 ### Project Assumptions
 
@@ -22,3 +23,4 @@
 10. **No Exception Service**: There is no dedicated service for handling exceptions.
 11. **Returning All Stories**: If a user requests more stories than exist in the collection, all available stories are returned.
 12. **Authentication**: It is not implement, in real life I would go for Azure AD if possible.
+13. **Load tests**: No load tests were performed. As result setting number of workers is by trial.
