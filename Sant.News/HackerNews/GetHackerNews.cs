@@ -149,7 +149,7 @@ namespace Sant.News.HackerNews
 
                 return storiesCount;
             }
-            private string WaitUntilStatusIsCompleted(string jobId)
+            private void WaitUntilStatusIsCompleted(string jobId)
             {
                 int maxRetries = 50;
                 int retryDelayMilliseconds = 500;
