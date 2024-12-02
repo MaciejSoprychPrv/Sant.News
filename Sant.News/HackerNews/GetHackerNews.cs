@@ -84,26 +84,42 @@ namespace Sant.News.HackerNews
             private readonly IIdsProcessing _idsProcessing;
             private readonly IStoryDetailsProcessing _storyDetailsProcessing;
             private readonly IMapper _mapper;
+            private readonly ILogger<Handler> _logger;
 
-            public Handler(IBackgroundJobClient client, IIdsProcessing idsProcessing, IStoryDetailsProcessing storyDetailsProcessing, IMapper mapper)
+            public Handler(IBackgroundJobClient client, IIdsProcessing idsProcessing, IStoryDetailsProcessing storyDetailsProcessing, IMapper mapper, ILogger<Handler> logger)
             {
                 _client = client;
                 _idsProcessing = idsProcessing;
                 _storyDetailsProcessing = storyDetailsProcessing;
                 _mapper = mapper;
+                _logger = logger;
             }
 
             public async Task<Result<List<GetHackerNewsDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
+                _logger.LogInformation("Fetching Hacker News' ids started");
+
                 var idsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds());
-                
+                _logger.LogInformation("Processing ids enqueued");
+
                 var detailsJobId = _client.ContinueJobWith(idsJobId, "hackernews", ()=>_storyDetailsProcessing.AddDetails());
-                
+                _logger.LogInformation("Processing details enqueued");
+
                 var detailsJobIdStatus = GetStatus(detailsJobId);
 
-                var rawStoriesDetails = _storyDetailsProcessing.GetAllStoryDetails();
+                if (detailsJobIdStatus != JobIdStatus.Succeeded.ToString())
+                {
+                    _logger.LogInformation("Processing failed");
+                    return Result.BadRequest<List<GetHackerNewsDto>>("The process was not successful please try again");
+                }
 
+                _logger.LogInformation("Getting Details from cache started");
+                var rawStoriesDetails = _storyDetailsProcessing.GetAllStoryDetails();
+                _logger.LogInformation("Getting Details from cache completed");
+
+                _logger.LogInformation("Mapping to DTO started");
                 var result = _mapper.Map<List<GetHackerNewsDto>>(rawStoriesDetails);
+                _logger.LogInformation("Mapping to DTO completed");
 
                 return Result.Ok(result);
             }
@@ -117,11 +133,8 @@ namespace Sant.News.HackerNews
                 {
                     string status = GetJobState(jobId);
 
-                    Console.WriteLine($"Attempt {attempt}: Job status is {status}");
-
                     if (status == "Succeeded")
                     {
-                        Console.WriteLine("Job zakończony sukcesem!");
                         return status;
                     }
 
