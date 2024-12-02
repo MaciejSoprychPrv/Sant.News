@@ -94,6 +94,8 @@ namespace Sant.News.HackerNews
             public Task<Result<List<GetHackerNewsDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
                 var idsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds());
+                var detailsJobId = _client.ContinueJobWith(idsJobId, "hackernews", ()=>_storyDetailsProcessing.AddDetails());
+
                 throw new NotImplementedException();
             }
         }
