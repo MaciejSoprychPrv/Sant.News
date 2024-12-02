@@ -28,7 +28,6 @@ builder.Services.AddHangfireServer(serverOptions =>
     serverOptions.WorkerCount = options.WorkerCount;
 });
 
-
 builder.Services.AddMemoryCache();
 
 var app = builder.Build();
