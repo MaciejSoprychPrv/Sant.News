@@ -91,12 +91,53 @@ namespace Sant.News.HackerNews
                 _storyDetailsProcessing = storyDetailsProcessing;
             }
 
-            public Task<Result<List<GetHackerNewsDto>>> Handle(Query request, CancellationToken cancellationToken)
+            public async Task<Result<List<GetHackerNewsDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
                 var idsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds());
+                
                 var detailsJobId = _client.ContinueJobWith(idsJobId, "hackernews", ()=>_storyDetailsProcessing.AddDetails());
 
+                await Task.Delay(10000);
+                
+                var detailsJobIdStatus = GetStatus(detailsJobId);
+
+
                 throw new NotImplementedException();
+            }
+
+            private string GetStatus(string jobId)
+            {
+                int maxRetries = 20;
+                int retryDelayMilliseconds = 1000;
+
+                for (int attempt = 1; attempt <= maxRetries; attempt++)
+                {
+                    string status = GetJobState(jobId);
+
+                    Console.WriteLine($"Attempt {attempt}: Job status is {status}");
+
+                    if (status == "Succeeded")
+                    {
+                        Console.WriteLine("Job zakończony sukcesem!");
+                        return status;
+                    }
+
+                    if (attempt < maxRetries)
+                    {
+                        Task.Delay(retryDelayMilliseconds).Wait(); // Poczekaj przed kolejną próbą
+                    }
+                }
+
+                Console.WriteLine("Nie udało się uzyskać statusu 'Succeeded' po maksymalnej liczbie prób.");
+                return "Failed to retrieve status";
+            }
+            public string GetJobState(string jobId)
+            {
+                using (var connection = JobStorage.Current.GetConnection())
+                {
+                    var stateData = connection.GetStateData(jobId);
+                    return stateData?.Name ?? "State not available";
+                }
             }
         }
     }
