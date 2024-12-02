@@ -1,6 +1,7 @@
 using Hangfire;
 using Sant.News.HackerNews;
 using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,21 @@ builder.Services.AddScoped<IIdsProcessing, IdsProcessing>();
 builder.Services.AddScoped<IStoryDetailsProcessing, StoryDetailsProcessing>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+var logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("logs\\log.txt", rollingInterval: RollingInterval.Day)
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Information)
+    .MinimumLevel.Override("Hangfire", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Host.UseSerilog(logger);
+
+builder.Logging.ClearProviders();
+
+builder.Logging.AddSerilog(logger);
 
 builder.Services.AddHangfire(c => c
     .UseInMemoryStorage()
@@ -36,7 +52,7 @@ builder.Services.Configure<HackerNewsConnectionOptions>(builder.Configuration.Ge
 builder.Services.AddMemoryCache();
 
 var app = builder.Build();
-
+app.UseSerilogRequestLogging();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -45,12 +61,12 @@ if (app.Environment.IsDevelopment())
 }
 app.UseHangfireDashboard();
 
-//app.UseSerilogRequestLogging();
-
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+logger.Information("Hacker News Web API started.");
 
 app.Run();
