@@ -5,7 +5,8 @@
 3. **Controller File**: The controller is located in the file `GetHackerNews`.
 4. **Managing Retry Attempts in Hangfire**: The number of retry attempts can be configured in the `Program` class, with `Attempts = 2` set in the Hangfire configuration.
 5. **Logs**: Logs of the application can be found in "logs" folder
-6. **Managing Number of Threads**: The number of threads used to query the API `https://hacker-news.firebaseio.com/` can be adjusted in the `Program` class. This is controlled by the `WorkerCount = 10` parameter in the Hangfire server configuration.
+6. **Hangfire dashboard**: The hangfire dashboard was implemented. It allows to analize all jobs and logs done by hangfire. To see the dashboar go to base URL /hangfire
+7. **Managing Number of Threads**: The number of threads used to query the API `https://hacker-news.firebaseio.com/` can be adjusted in the `Program` class. This is controlled by the `WorkerCount = 10` parameter in the Hangfire server configuration.
    - **Higher `WorkerCount`**: Increases the load on the external API.
    - **Lower `WorkerCount`**: Reduces the load on the external API.
   
