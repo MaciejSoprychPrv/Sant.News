@@ -166,8 +166,6 @@ namespace Sant.News.HackerNews
                         }
                     }
                 }
-
-                return "Failed to retrieve status";
             }
             public string GetJobState(string jobId)
             {
