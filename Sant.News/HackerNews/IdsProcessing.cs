@@ -1,6 +1,4 @@
-﻿
-
-using Flurl;
+﻿using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
@@ -31,5 +29,6 @@ namespace Sant.News.HackerNews
 
     public interface IIdsProcessing
     {
+        Task AddIds();
     }
 }
