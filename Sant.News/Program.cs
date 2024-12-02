@@ -1,4 +1,5 @@
 using Hangfire;
+using Sant.News.HackerNews;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
+builder.Services.AddScoped<IIdsProcessing, IdsProcessing>();
+builder.Services.AddScoped<IStoryDetailsProcessing, StoryDetailsProcessing>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -27,6 +30,7 @@ builder.Services.AddHangfireServer(serverOptions =>
     serverOptions.Queues = options.Queues;
     serverOptions.WorkerCount = options.WorkerCount;
 });
+builder.Services.Configure<HackerNewsConnectionOptions>(builder.Configuration.GetSection("HackerNewsConnectionOptions"));
 
 builder.Services.AddMemoryCache();
 
