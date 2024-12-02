@@ -11,3 +11,4 @@
 9. **Unit Test Preparation for Hangfire**: Unit tests for Hangfire calls are skipped. However, `IBackgroundJobClient _client` is injected to prepare for future testing.
 10. **No Exception Service**: There is no dedicated service for handling exceptions.
 11. **Returning All Stories**: If a user requests more stories than exist in the collection, all available stories are returned.
+12. **Authentication**: It is not implement, in real life I would go for Azure AD if possible.
