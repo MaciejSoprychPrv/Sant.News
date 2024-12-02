@@ -121,9 +121,25 @@ namespace Sant.News.HackerNews
                 var result = _mapper.Map<List<GetHackerNewsDto>>(rawStoriesDetails);
                 _logger.LogInformation("Mapping to DTO completed");
 
+                result = result.OrderByDescending(c => c.Score).ToList();
+
+                var storiesCount = CalculateStorieCount(request.StoriesCount, result);
+
+                result = result.Take(storiesCount).ToList();
+
                 return Result.Ok(result);
             }
 
+            private int CalculateStorieCount(int storiesCount, List<GetHackerNewsDto> storiesDetail)
+            {
+                var maxNumberOfStories = storiesDetail.Count;
+                if (storiesCount > maxNumberOfStories)
+                {
+                    storiesCount = maxNumberOfStories;
+                }
+
+                return storiesCount;
+            }
             private string GetStatus(string jobId)
             {
                 int maxRetries = 50;
