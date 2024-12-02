@@ -3,6 +3,7 @@
 using System.Text.Json;
 using Flurl;
 using Flurl.Http;
+using Hangfire;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using static Sant.News.HackerNews.GetHackerNews;
@@ -13,10 +14,12 @@ namespace Sant.News.HackerNews
     {
         private readonly HackerNewsConnectionOptions _hackerNewsConnectionOptions;
         private readonly IMemoryCache _cache;
+        private readonly IBackgroundJobClient _client;
 
-        public StoryDetailsProcessing(IOptions<HackerNewsConnectionOptions> hackerNewsConnectionOptions, IMemoryCache cache)
+        public StoryDetailsProcessing(IOptions<HackerNewsConnectionOptions> hackerNewsConnectionOptions, IMemoryCache cache, IBackgroundJobClient client)
         {
             _cache = cache;
+            _client = client;
             _hackerNewsConnectionOptions = hackerNewsConnectionOptions.Value;
         }
 
@@ -39,13 +42,16 @@ namespace Sant.News.HackerNews
         {
             var idsRaw = GetIds();
             var ids = Convert(idsRaw);
+            var detailJobsIds = new List<string>();
             foreach (var id in ids)
             {
-                await AddDetail(id);
+                var detailJobId = _client.Enqueue("hackernews", () => AddDetail(id));
+                detailJobsIds.Add(detailJobId);
             }
+            _cache.Set("DetailJobIds", detailJobsIds, TimeSpan.FromMinutes(30));
         }
 
-        private async Task AddDetail(int id)
+        public async Task AddDetail(int id)
         {
             var result = await _hackerNewsConnectionOptions.Url
                 .AppendPathSegment($"v0/item/{id}.json")
