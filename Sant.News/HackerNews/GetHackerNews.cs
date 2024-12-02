@@ -3,7 +3,6 @@ using FluentValidation;
 using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace Sant.News.HackerNews
 {
@@ -97,19 +96,20 @@ namespace Sant.News.HackerNews
                 _logger.LogInformation("Validation of storiesCount completed");
 
                 _logger.LogInformation("Fetching Hacker News' ids started");
-                var idsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds());
+                var addIdsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds());
                 _logger.LogInformation("Processing ids enqueued");
 
-                var detailsJobId = _client.ContinueJobWith(idsJobId, "hackernews", ()=>_storyDetailsProcessing.AddDetails());
-                _logger.LogInformation("Processing details enqueued");
+                _logger.LogInformation($"Waiting for AddIds job to be completed");
+                WaitUntilStatusIsCompleted(addIdsJobId);
+                _logger.LogInformation($"AddIds job status completed");
 
-                var detailsJobIdStatus = GetStatus(detailsJobId);
+                await _storyDetailsProcessing.AddDetails();
+                _logger.LogInformation("Processing details");
 
-                if (detailsJobIdStatus != JobIdStatus.Succeeded.ToString())
-                {
-                    _logger.LogInformation("Processing failed");
-                    return Result.BadRequest<List<GetHackerNewsDto>>("The process was not successful please try again");
-                }
+                _logger.LogInformation("Waiting for AddDetails jobs to be completed");
+                var detailJobsIds = _storyDetailsProcessing.GetDetailJobsIds();
+                WaitTillAllStatusesAreCompleted(detailJobsIds);
+                _logger.LogInformation("AddDetails jobs completed");
 
                 _logger.LogInformation("Getting Details from cache started");
                 var rawStoriesDetails = _storyDetailsProcessing.GetAllStoryDetails();
@@ -119,11 +119,10 @@ namespace Sant.News.HackerNews
                 var result = _mapper.Map<List<GetHackerNewsDto>>(rawStoriesDetails);
                 _logger.LogInformation("Mapping to DTO completed");
 
-                
                 result = result.OrderByDescending(c => c.Score).ToList();
                 _logger.LogInformation("Ordered descending");
 
-                var storiesCount = CalculateStorieCount(request.StoriesCount, result);
+                var storiesCount = CalculateStoriesCount(request.StoriesCount, result);
                 _logger.LogInformation("Number of stories to be taken");
 
                 result = result.Take(storiesCount).ToList();
@@ -132,7 +131,15 @@ namespace Sant.News.HackerNews
                 return Result.Ok(result);
             }
 
-            private int CalculateStorieCount(int storiesCount, List<GetHackerNewsDto> storiesDetail)
+            private void WaitTillAllStatusesAreCompleted(List<string> jobsIds)
+            {
+                foreach (var jobsId in jobsIds)
+                {
+                    WaitUntilStatusIsCompleted(jobsId);
+                }
+            }
+
+            private int CalculateStoriesCount(int storiesCount, List<GetHackerNewsDto> storiesDetail)
             {
                 var maxNumberOfStories = storiesDetail.Count;
                 if (storiesCount > maxNumberOfStories)
@@ -142,27 +149,23 @@ namespace Sant.News.HackerNews
 
                 return storiesCount;
             }
-            private string GetStatus(string jobId)
+            private void WaitUntilStatusIsCompleted(string jobId)
             {
                 int maxRetries = 50;
-                int retryDelayMilliseconds = 2000;
+                int retryDelayMilliseconds = 500;
 
                 for (int attempt = 1; attempt <= maxRetries; attempt++)
                 {
                     string status = GetJobState(jobId);
 
-                    if (status == "Succeeded")
+                    if (status != "Succeeded")
                     {
-                        return status;
-                    }
-
-                    if (attempt < maxRetries)
-                    {
-                        Task.Delay(retryDelayMilliseconds).Wait();
+                        if (attempt < maxRetries)
+                        {
+                            Task.Delay(retryDelayMilliseconds).Wait();
+                        }
                     }
                 }
-
-                return "Failed to retrieve status";
             }
             public string GetJobState(string jobId)
             {
