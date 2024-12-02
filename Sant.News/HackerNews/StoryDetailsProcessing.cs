@@ -19,6 +19,7 @@ namespace Sant.News.HackerNews
             _cache = cache;
             _hackerNewsConnectionOptions = hackerNewsConnectionOptions.Value;
         }
+
         public List<HackerNewsRaw> GetAllStoryDetails()
         {
             var rawId = GetIds();
@@ -33,6 +34,7 @@ namespace Sant.News.HackerNews
             }
             return allStories;
         }
+
         public async Task AddDetails()
         {
             var idsRaw = GetIds();
