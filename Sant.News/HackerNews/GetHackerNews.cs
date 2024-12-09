@@ -96,14 +96,14 @@ namespace Sant.News.HackerNews
                 _logger.LogInformation("Validation of storiesCount completed");
 
                 _logger.LogInformation("Fetching Hacker News' ids started");
-                var addIdsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds());
+                var addIdsJobId = _client.Enqueue("hackernews", () => _idsProcessing.AddIds(cancellationToken));
                 _logger.LogInformation("Processing ids enqueued");
 
                 _logger.LogInformation($"Waiting for AddIds job to be completed");
                 WaitUntilStatusIsCompleted(addIdsJobId);
                 _logger.LogInformation($"AddIds job status completed");
 
-                await _storyDetailsProcessing.AddDetails();
+                await _storyDetailsProcessing.AddDetails(cancellationToken);
                 _logger.LogInformation("Processing details");
 
                 _logger.LogInformation("Waiting for AddDetails jobs to be completed");
