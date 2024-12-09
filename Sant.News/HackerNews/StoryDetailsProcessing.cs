@@ -46,25 +46,25 @@ namespace Sant.News.HackerNews
             return allStories;
         }
 
-        public async Task AddDetails()
+        public async Task AddDetails(CancellationToken cancellationToken)
         {
             var idsRaw = GetIds();
             var ids = Convert(idsRaw);
             var detailJobsIds = new List<string>();
             foreach (var id in ids)
             {
-                var detailJobId = _client.Enqueue("hackernews", () => AddDetail(id));
+                var detailJobId = _client.Enqueue("hackernews", () => AddDetail(id, cancellationToken));
                 detailJobsIds.Add(detailJobId);
                 _logger.LogInformation($"Getting detail for story {id} enqueued");
             }
             _cache.Set("DetailJobIds", detailJobsIds, TimeSpan.FromMinutes(30));
         }
 
-        public async Task AddDetail(int id)
+        public async Task AddDetail(int id, CancellationToken cancellationToken)
         {
             var result = await _hackerNewsConnectionOptions.Url
                 .AppendPathSegment($"v0/item/{id}.json")
-                .GetJsonAsync<HackerNewsRaw>();
+                .GetJsonAsync<HackerNewsRaw>(cancellationToken);
 
             _cache.Set($"Detail_{id}", result, TimeSpan.FromMinutes(30));
 
@@ -90,7 +90,7 @@ namespace Sant.News.HackerNews
     public interface IStoryDetailsProcessing
     {
         List<HackerNewsRaw> GetAllStoryDetails();
-        Task AddDetails();
+        Task AddDetails(CancellationToken cancellationToken);
         List<string> GetDetailJobsIds();
     }
 }

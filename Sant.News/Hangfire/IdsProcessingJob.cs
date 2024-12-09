@@ -13,15 +13,15 @@ namespace Sant.News.Hangfire
             _backgroundJobs = backgroundJobs;
         }
 
-        async Task IIdsProcessingJob.IdsJob()
+        async Task IIdsProcessingJob.IdsJob(CancellationToken cancellationToken)
         {
             _backgroundJobs.Enqueue<IIdsProcessing>(s =>
-                s.AddIds());
+                s.AddIds(cancellationToken));
         }
     }
 
     public interface IIdsProcessingJob
     {
-        Task IdsJob();
+        Task IdsJob(CancellationToken cancellationToken);
     }
 }

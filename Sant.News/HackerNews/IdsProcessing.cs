@@ -15,11 +15,11 @@ namespace Sant.News.HackerNews
             _hackerNewsConnectionOptions = hackerNewsConnectionOptions.Value;
             _cache = cache;
         }
-        public async Task AddIds()
+        public async Task AddIds(CancellationToken cancellationToken)
         {
             var result = await _hackerNewsConnectionOptions.Url
                 .AppendPathSegment("v0/beststories.json")
-                .GetStringAsync();
+                .GetStringAsync(cancellationToken);
 
             _cache.Set("Ids", result, TimeSpan.FromMinutes(30));
 
@@ -29,6 +29,6 @@ namespace Sant.News.HackerNews
 
     public interface IIdsProcessing
     {
-        Task AddIds();
+        Task AddIds(CancellationToken cancellationToken);
     }
 }
